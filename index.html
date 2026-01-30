@@ -3,24 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>沉浸式防火防災 3D 訓練</title>
+    <title>沉浸式防火防災 3D 虛擬模擬</title>
     <!-- 引入 Three.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         :root {
-            --glass: rgba(255, 255, 255, 0.1);
-            --glass-bright: rgba(255, 255, 255, 0.25);
+            --glass: rgba(0, 0, 0, 0.5);
+            --glass-bright: rgba(255, 255, 255, 0.1);
             --danger: #ff4757;
             --success: #2ed573;
+            --warning: #ffa502;
         }
 
         body {
             margin: 0;
             overflow: hidden;
-            background: #0a0a0a;
+            background: #050505;
             font-family: -apple-system, "SF Pro Display", "PingFang TC", system-ui, sans-serif;
             color: white;
-            cursor: crosshair;
+            user-select: none;
         }
 
         #canvas-container {
@@ -45,43 +46,62 @@
 
         .main-panel {
             background: var(--glass);
-            backdrop-filter: blur(40px);
-            -webkit-backdrop-filter: blur(40px);
-            border-radius: 50px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(50px);
+            -webkit-backdrop-filter: blur(50px);
+            border-radius: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
             padding: 50px;
             width: 85%;
-            max-width: 700px;
+            max-width: 800px;
             text-align: center;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.8);
+            box-shadow: 0 40px 100px rgba(0,0,0,0.9);
             pointer-events: auto;
             transform-style: preserve-3d;
-            transition: transform 0.3s ease;
+            transition: all 0.3s ease-out;
         }
 
         .status-bar {
             display: flex;
             justify-content: space-between;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 20px;
-            color: rgba(255,255,255,0.6);
+            letter-spacing: 3px;
+            margin-bottom: 25px;
+            color: var(--warning);
         }
 
         h1 {
-            font-size: 2.5rem;
-            margin: 0 0 20px 0;
-            font-weight: 800;
-            letter-spacing: -1px;
+            font-size: 2.2rem;
+            margin: 0 0 10px 0;
+            font-weight: 900;
+            background: linear-gradient(135deg, #fff 0%, #aaa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        #timer-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            margin-bottom: 30px;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        #timer-progress {
+            width: 100%;
+            height: 100%;
+            background: var(--warning);
+            transition: width 1s linear;
         }
 
         #question-box {
-            font-size: 1.6rem;
+            font-size: 1.5rem;
             margin-bottom: 40px;
             font-weight: 500;
-            line-height: 1.4;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            line-height: 1.5;
+            color: #efefef;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
         }
 
         .options-grid {
@@ -92,71 +112,64 @@
 
         .option-card {
             background: var(--glass-bright);
-            border: 1px solid rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.15);
             padding: 30px 20px;
-            border-radius: 25px;
+            border-radius: 20px;
             cursor: pointer;
-            transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
             font-size: 1.2rem;
-            position: relative;
-            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #ddd;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        /* Vision Pro Gaze Effect */
         .option-card:hover {
-            background: rgba(255,255,255,0.9);
-            color: #000;
-            transform: translateZ(50px) scale(1.05);
-            box-shadow: 0 0 40px rgba(255,255,255,0.4);
-        }
-
-        .option-card:active {
-            transform: translateZ(20px) scale(0.95);
+            background: white;
+            color: black;
+            transform: translateZ(60px) scale(1.05);
+            box-shadow: 0 0 50px rgba(255,255,255,0.4);
         }
 
         #system-msg {
             margin-top: 30px;
             font-size: 1.1rem;
-            min-height: 1.5em;
+            font-weight: bold;
+            height: 1.5em;
+            text-transform: uppercase;
             letter-spacing: 1px;
-            transition: all 0.3s;
         }
 
-        /* 沉浸式濾鏡效果 */
+        /* 沉浸式視覺警報效果 */
         #danger-vignette {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none;
             z-index: 5;
-            background: radial-gradient(circle, transparent 50%, rgba(255, 71, 87, 0) 100%);
-            transition: background 0.5s;
+            transition: background 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            background: radial-gradient(circle, transparent 100%, rgba(255, 0, 0, 0) 100%);
         }
 
         .alert-active {
-            background: radial-gradient(circle, transparent 30%, rgba(255, 71, 87, 0.4) 100%) !important;
-            animation: pulse-red 2s infinite;
+            background: radial-gradient(circle, transparent 20%, rgba(255, 0, 0, 0.5) 100%) !important;
+            animation: pulse-danger 0.8s infinite alternate;
         }
 
-        @keyframes pulse-red {
-            0% { opacity: 0.5; }
-            50% { opacity: 1; }
-            100% { opacity: 0.5; }
+        @keyframes pulse-danger {
+            from { opacity: 0.5; }
+            to { opacity: 1; }
         }
 
-        .shake {
-            animation: shake-anim 0.5s;
+        .shake-panel {
+            animation: shake-spatial 0.5s cubic-bezier(.36,.07,.19,.97) both;
+            border-color: var(--danger) !important;
         }
 
-        @keyframes shake-anim {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            75% { transform: translateX(10px); }
+        @keyframes shake-spatial {
+            0%, 100% { transform: translate3d(0, 0, 0) rotate(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translate3d(-10px, -5px, 20px) rotate(-1deg); }
+            20%, 40%, 60%, 80% { transform: translate3d(10px, 5px, -10px) rotate(1deg); }
         }
     </style>
 </head>
@@ -168,16 +181,17 @@
     <div id="ui-layer">
         <div class="main-panel" id="main-panel">
             <div class="status-bar">
-                <span>模擬狀態: 運作中</span>
-                <span>核心分數: <span id="score">0</span></span>
+                <span>防護進度: LEVEL <span id="level">1</span></span>
+                <span>核心穩定度: <span id="score">100</span>%</span>
             </div>
-            <h1 id="title">空間防火訓練</h1>
+            <h1>防災模擬系統</h1>
+            <div id="timer-bar"><div id="timer-progress"></div></div>
             
             <div id="content-area">
                 <div id="question-box">系統初始化中...</div>
                 <div class="options-grid">
-                    <div class="option-card" id="opt0" onclick="selectAnswer(0)">載入中</div>
-                    <div class="option-card" id="opt1" onclick="selectAnswer(1)">載入中</div>
+                    <div class="option-card" id="opt0" onclick="selectAnswer(0)">準備就緒</div>
+                    <div class="option-card" id="opt1" onclick="selectAnswer(1)">準備就緒</div>
                 </div>
                 <div id="system-msg"></div>
             </div>
@@ -185,128 +199,143 @@
     </div>
 
 <script>
-    // --- 沉浸式情境資料 ---
     const quizData = [
-        { q: "【情境：廚房起火】炒菜時油鍋燃起烈火，你的直覺反應是？", options: ["迅速蓋上鍋蓋切斷熱源", "用水龍頭冷水直接澆滅"], correct: 0, voice: "廚房起火了！快決定處理方式。" },
-        { q: "【情境：濃煙籠罩】逃生門外充滿黑色濃煙，看不清地板，此時應？", options: ["低姿勢爬行，尋找逃生口", "挺直身體快速衝過煙霧區"], correct: 0, voice: "煙霧遮蔽了視線。保持冷靜，採取低姿勢。" },
-        { q: "【情境：地震發生】地面開始劇烈晃動，物品掉落聲四起，你該？", options: ["立即跑向室外空曠處", "就地趴下、找掩護並穩住"], correct: 1, voice: "強震來襲！立刻尋求掩護。" },
-        { q: "【情境：受困高樓】房間門把發燙，無法開門逃生，應如何應對？", options: ["關門並塞住縫隙，在視窗求救", "強行開門，用濕毛巾摀口鼻衝出"], correct: 0, voice: "門把已經發燙。不要開門！設法防止煙霧進入。" },
-        { q: "【情境：衣物著火】逃生時發現袖口起火燃燒，應採取動作？", options: ["快速跑步利用風力吹滅", "停、躺、捲，滾動滅火"], correct: 1, voice: "你的衣服著火了！停下，躺下，開始翻滾。" }
+        { q: "【火場應變】室內失火濃煙密佈，逃生姿勢應為何？", options: ["挺起身子快跑", "採低姿勢爬行"], correct: 1, voice: "警報！室內濃煙密佈。請選擇逃生姿勢：選項一，挺起身子快跑；選項二，採低姿勢爬行。" },
+        { q: "【設備操作】使用滅火器時，噴嘴應瞄準火焰的哪個部位？", options: ["火焰的頂部", "火焰的根部"], correct: 1, voice: "發現火點。使用滅火器時，應瞄準何處？選項一，火焰的頂部；選項二，火焰的根部。" },
+        { q: "【通訊求救】火災發生時，撥打 999 應優先說出什麼資訊？", options: ["詳細地址與起火原因", "目前的得分與心情"], correct: 0, voice: "正在聯絡指揮中心。應優先通報什麼資訊？選項一，詳細地址與起火原因；選項二，目前的得分與心情。" },
+        { q: "【避難常識】火災逃生時，若發現門把發燙，正確做法是？", options: ["不開門，尋找其他出口", "戴上手套迅速開門衝出"], correct: 0, voice: "路徑受阻，門把發燙。你的下一步？選項一，不開門，尋找其他出口；選項二，戴上手套迅速開門衝出。" },
+        { q: "【地震防護】地震發生時，最好的防護動作口訣是？", options: ["趴下、掩護、穩住", "衝刺、跳躍、翻滾"], correct: 0, voice: "強烈震動！請執行防護口訣：選項一，趴下、掩護、穩住；選項二，衝刺、跳躍、翻滾。" }
     ];
 
     let currentIdx = 0;
-    let score = 0;
+    let score = 100;
     let lock = false;
+    let baseFogDensity = 0.12; // 初始較濃的煙霧
 
-    // --- Three.js 空間背景 ---
-    let scene, camera, renderer, extinguisher, particles, fogEffect;
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(freq, type, duration, volume = 0.1) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+    }
 
-    function initSpatialEnvironment() {
+    function speak(text) {
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.lang = 'zh-TW';
+        utter.rate = 1.0;
+        window.speechSynthesis.speak(utter);
+    }
+
+    let scene, camera, renderer, extinguisher, particles;
+    function init3D() {
         scene = new THREE.Scene();
-        // 加入迷霧感 (沉浸式細節)
-        scene.fog = new THREE.FogExp2(0x0a0a0a, 0.05);
-
-        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.z = 6;
-
+        scene.fog = new THREE.FogExp2(0x050505, baseFogDensity);
+        
+        camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+        camera.position.z = 7;
+        
         renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(window.devicePixelRatio);
         document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-        // 燈光效果
-        const light = new THREE.SpotLight(0xffffff, 1);
-        light.position.set(10, 10, 10);
-        scene.add(light);
-        scene.add(new THREE.AmbientLight(0x404040));
-
-        // 3D 滅火器
-        extinguisher = createExtinguisher();
+        extinguisher = new THREE.Group();
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 2, 32), new THREE.MeshPhongMaterial({color: 0xd32f2f}));
+        const top = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.5, 0.4, 32), new THREE.MeshPhongMaterial({color: 0x222222}));
+        top.position.y = 1.2;
+        extinguisher.add(body); extinguisher.add(top);
         scene.add(extinguisher);
 
-        // 動態火星粒子
-        const pGeo = new THREE.BufferGeometry();
-        const pCount = 2000;
-        const pPos = new Float32Array(pCount * 3);
-        for(let i=0; i<pCount*3; i++) pPos[i] = (Math.random() - 0.5) * 20;
-        pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
-        const pMat = new THREE.PointsMaterial({ size: 0.05, color: 0xffa502, transparent: true, opacity: 0.6 });
-        particles = new THREE.Points(pGeo, pMat);
+        const geo = new THREE.BufferGeometry();
+        const pos = new Float32Array(3000 * 3);
+        for(let i=0; i<9000; i++) pos[i] = (Math.random()-0.5)*25;
+        geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+        const mat = new THREE.PointsMaterial({size: 0.04, color: 0xff4500, transparent: true, opacity: 0.6});
+        particles = new THREE.Points(geo, mat);
         scene.add(particles);
+
+        const light = new THREE.PointLight(0xffffff, 1); light.position.set(5,5,5); scene.add(light);
+        scene.add(new THREE.AmbientLight(0x202020));
 
         animate();
     }
 
-    function createExtinguisher() {
-        const group = new THREE.Group();
-        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 1.8, 32), new THREE.MeshPhongMaterial({ color: 0xc0392b }));
-        const head = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.4, 0.3, 32), new THREE.MeshPhongMaterial({ color: 0x333333 }));
-        head.position.y = 1;
-        group.add(body);
-        group.add(head);
-        return group;
-    }
-
     function animate() {
         requestAnimationFrame(animate);
-        extinguisher.rotation.y += 0.005;
-        extinguisher.position.y = Math.sin(Date.now() * 0.001) * 0.2;
-        particles.rotation.y += 0.001;
+        const time = Date.now() * 0.001;
+        
+        extinguisher.rotation.y += 0.01;
+        extinguisher.position.y = Math.sin(time) * 0.2;
+        
+        particles.rotation.y += 0.0005;
+        
+        // 平滑過渡煙霧密度
+        const targetFog = Math.max(0.01, baseFogDensity + (Math.sin(time * 2) * 0.005));
+        scene.fog.density += (targetFog - scene.fog.density) * 0.1;
+        
         renderer.render(scene, camera);
-    }
-
-    // --- 沉浸式互動邏輯 ---
-    function speak(text) {
-        if ('speechSynthesis' in window) {
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'zh-TW';
-            utterance.rate = 0.9;
-            window.speechSynthesis.speak(utterance);
-        }
     }
 
     function renderStep() {
         if (currentIdx >= quizData.length) {
-            showSummary();
-            return;
+            showEnd(); return;
         }
-
-        const step = quizData[currentIdx];
-        document.getElementById('question-box').innerText = step.q;
-        document.getElementById('opt0').innerText = step.options[0];
-        document.getElementById('opt1').innerText = step.options[1];
-        document.getElementById('system-msg').innerText = "等待指令...";
-        document.getElementById('system-msg').style.color = "white";
-        
-        speak(step.voice);
         lock = false;
+        const data = quizData[currentIdx];
+        document.getElementById('question-box').innerText = data.q;
+        document.getElementById('opt0').innerText = data.options[0];
+        document.getElementById('opt1').innerText = data.options[1];
+        document.getElementById('system-msg').innerText = "系統掃描中...";
+        document.getElementById('system-msg').style.color = "rgba(255,255,255,0.6)";
+        document.getElementById('level').innerText = currentIdx + 1;
+        
+        speak(data.voice);
     }
 
     function selectAnswer(idx) {
         if (lock) return;
         lock = true;
-
+        
         const correct = quizData[currentIdx].correct;
         const msg = document.getElementById('system-msg');
         const vignette = document.getElementById('danger-vignette');
         const panel = document.getElementById('main-panel');
 
         if (idx === correct) {
-            score += 20;
-            msg.innerText = "✅ 判斷正確。環境壓力下降。";
+            playSound(880, 'sine', 0.1, 0.1);
+            setTimeout(() => playSound(1100, 'sine', 0.2, 0.1), 100);
+            msg.innerText = ">> 正確判斷：煙霧排除系統啟動";
             msg.style.color = "var(--success)";
-            scene.fog.density = 0.05; // 恢復清晰
-            vignette.classList.remove('alert-active');
-        } else {
-            msg.innerText = "❌ 警告：此決策將導致生命威脅！";
-            msg.style.color = "var(--danger)";
-            panel.classList.add('shake');
-            setTimeout(() => panel.classList.remove('shake'), 500);
             
-            // 沉浸式負面回饋：濃煙增加
-            scene.fog.density = 0.3; 
+            // 答對獎勵：減少基礎煙霧密度
+            baseFogDensity = Math.max(0.02, baseFogDensity - 0.03);
+            
+            speak("判定正確，視野正在改善。");
+        } else {
+            score -= 20;
+            // 答錯懲罰：增加基礎煙霧密度
+            baseFogDensity += 0.08; 
+            
+            playSound(110, 'sawtooth', 0.6, 0.2); 
+            msg.innerText = ">> 警告：危險擴散！環境惡化";
+            msg.style.color = "var(--danger)";
+            
             vignette.classList.add('alert-active');
-            speak("警告，偵測到危險等級上升。");
+            panel.classList.add('shake-panel');
+            
+            speak("決策錯誤。煙霧正在蔓延。");
+            
+            setTimeout(() => {
+                vignette.classList.remove('alert-active');
+                panel.classList.remove('shake-panel');
+            }, 1500);
         }
 
         document.getElementById('score').innerText = score;
@@ -314,39 +343,33 @@
         setTimeout(() => {
             currentIdx++;
             renderStep();
-        }, 2500);
+        }, 3000);
     }
 
-    function showSummary() {
-        const content = document.getElementById('content-area');
-        const finalRank = score >= 100 ? "特級防火指揮官" : score >= 60 ? "安全防護員" : "急需重新訓練";
+    function showEnd() {
+        const finalStatus = score >= 80 ? "卓越防護者" : score >= 60 ? "合格受訓生" : "核心崩潰 - 需重訓";
+        speak(`訓練完成。最終環境穩定度：百分之${score}。等級：${finalStatus}。`);
         
-        content.innerHTML = `
-            <div style="padding: 20px;">
-                <h2 style="font-size: 2rem; color: var(--success);">模擬訓練結束</h2>
-                <p style="font-size: 1.3rem;">空間認知分數：${score}</p>
-                <p style="font-size: 1.5rem; font-weight: bold;">評級：${finalRank}</p>
-                <div style="margin-top: 30px;">
-                    <button class="option-card" style="width: 100%; pointer-events: auto;" onclick="location.reload()">重新啟動模擬系統</button>
-                </div>
+        document.getElementById('content-area').innerHTML = `
+            <div style="margin: 40px 0;">
+                <h2 style="color:var(--warning); font-size: 2rem;">訓練結算</h2>
+                <p style="font-size: 1.5rem; margin-bottom: 5px;">穩定度得分: ${score}%</p>
+                <p style="color: #aaa; margin-bottom: 30px;">環境評級: ${finalStatus}</p>
+                <button class="option-card" style="width:100%; pointer-events:auto;" onclick="location.reload()">重新初始化系統</button>
             </div>
         `;
-        speak(`訓練結束。您的分數是${score}分。評級為${finalRank}。`);
     }
 
-    // 螢幕尺寸自適應
     window.addEventListener('resize', () => {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
     });
 
-    // 啟動環境
     window.onload = () => {
-        initSpatialEnvironment();
-        setTimeout(renderStep, 1000); // 延遲 1 秒啟動以確保瀏覽器準備好
+        init3D();
+        renderStep();
     };
 </script>
-
 </body>
 </html>
