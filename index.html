@@ -8,18 +8,18 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         :root {
-            --glass: rgba(0, 0, 0, 0.6);
+            --glass: rgba(0, 0, 0, 0.7);
             --glass-bright: rgba(255, 255, 255, 0.1);
             --danger: #ff4757;
             --success: #2ed573;
             --warning: #ffa502;
-            --scan-color: rgba(0, 255, 255, 0.1);
+            --accent: #00d2ff;
         }
 
         body {
             margin: 0;
             overflow: hidden;
-            background: #020202;
+            background: #010101;
             font-family: -apple-system, "SF Pro Display", "PingFang TC", system-ui, sans-serif;
             color: white;
             user-select: none;
@@ -34,24 +34,19 @@
             z-index: 1;
         }
 
-        /* 空間掃描線特效 */
-        #scan-line {
+        /* 空間數位標線與雜訊效果 */
+        #hud-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
-            height: 2px;
-            background: var(--scan-color);
-            box-shadow: 0 0 15px cyan;
+            height: 100%;
+            border: 15px solid transparent;
+            border-image: linear-gradient(to bottom, var(--accent), transparent) 1;
+            opacity: 0.15;
             z-index: 2;
             pointer-events: none;
-            animation: scan 4s linear infinite;
-        }
-
-        @keyframes scan {
-            0% { top: -10%; opacity: 0; }
-            50% { opacity: 0.5; }
-            100% { top: 110%; opacity: 0; }
+            background: repeating-linear-gradient(0deg, rgba(0,0,0,0.05) 0px, rgba(0,0,0,0.05) 1px, transparent 2px);
         }
 
         #ui-layer {
@@ -67,18 +62,18 @@
 
         .main-panel {
             background: var(--glass);
-            backdrop-filter: blur(60px);
-            -webkit-backdrop-filter: blur(60px);
+            backdrop-filter: blur(100px);
+            -webkit-backdrop-filter: blur(100px);
             border-radius: 40px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
             padding: 50px;
             width: 85%;
             max-width: 800px;
             text-align: center;
-            box-shadow: 0 40px 100px rgba(0,0,0,0.9);
+            box-shadow: 0 40px 150px rgba(0,0,0,1);
             pointer-events: auto;
             transform-style: preserve-3d;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .status-bar {
@@ -86,9 +81,9 @@
             justify-content: space-between;
             font-size: 0.7rem;
             text-transform: uppercase;
-            letter-spacing: 4px;
+            letter-spacing: 5px;
             margin-bottom: 25px;
-            color: var(--warning);
+            color: var(--accent);
             opacity: 0.8;
         }
 
@@ -96,17 +91,17 @@
             font-size: 2.2rem;
             margin: 0 0 10px 0;
             font-weight: 900;
-            letter-spacing: -1px;
-            background: linear-gradient(180deg, #fff 30%, #666 100%);
+            letter-spacing: -0.5px;
+            background: linear-gradient(180deg, #fff 0%, #888 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
         #timer-bar {
             width: 100%;
-            height: 4px;
+            height: 3px;
             background: rgba(255,255,255,0.05);
-            margin-bottom: 30px;
+            margin-bottom: 35px;
             border-radius: 2px;
             overflow: hidden;
         }
@@ -114,18 +109,18 @@
         #timer-progress {
             width: 100%;
             height: 100%;
-            background: var(--warning);
-            box-shadow: 0 0 10px var(--warning);
+            background: var(--accent);
+            box-shadow: 0 0 15px var(--accent);
             transition: width 1s linear;
         }
 
         #question-box {
             font-size: 1.5rem;
-            margin-bottom: 40px;
+            margin-bottom: 45px;
             font-weight: 500;
             line-height: 1.6;
             color: #fff;
-            text-shadow: 0 0 20px rgba(255,255,255,0.2);
+            text-shadow: 0 5px 20px rgba(0,0,0,0.5);
         }
 
         .options-grid {
@@ -137,91 +132,95 @@
         .option-card {
             background: var(--glass-bright);
             border: 1px solid rgba(255,255,255,0.1);
-            padding: 30px 20px;
-            border-radius: 20px;
+            padding: 35px 25px;
+            border-radius: 24px;
             cursor: pointer;
             transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
             font-size: 1.2rem;
             display: flex;
             justify-content: center;
             align-items: center;
-            color: #eee;
+            color: #fff;
             position: relative;
             overflow: hidden;
         }
 
         .option-card:hover {
-            background: rgba(255,255,255,0.9);
-            color: black;
-            transform: translateZ(50px) scale(1.05);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            background: #fff;
+            color: #000;
+            transform: translateZ(50px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8);
         }
 
         #system-msg {
-            margin-top: 30px;
+            margin-top: 35px;
             font-size: 1rem;
-            font-weight: bold;
+            font-weight: 800;
             height: 1.5em;
             letter-spacing: 2px;
-            opacity: 0.9;
+            text-transform: uppercase;
         }
 
-        /* 答錯時的視覺失真 */
-        .glitch {
-            filter: contrast(150%) brightness(120%) hue-rotate(90deg);
-        }
-
+        /* 視覺效果層 */
         #danger-vignette {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none;
             z-index: 5;
-            transition: all 0.5s;
-            background: radial-gradient(circle, transparent 100%, rgba(255, 0, 0, 0) 100%);
+            transition: opacity 0.4s, background 0.4s;
+            background: radial-gradient(circle, transparent 20%, rgba(255, 0, 0, 0) 100%);
+            opacity: 0;
         }
 
         .alert-active {
-            background: radial-gradient(circle, transparent 15%, rgba(255, 0, 0, 0.6) 100%) !important;
-            animation: pulse-danger 0.5s infinite alternate;
+            opacity: 1 !important;
+            background: radial-gradient(circle, transparent 10%, rgba(255, 0, 0, 0.6) 100%) !important;
+            animation: pulse-danger 0.4s infinite alternate;
+        }
+
+        .success-flash {
+            opacity: 1 !important;
+            background: radial-gradient(circle, transparent 10%, rgba(0, 255, 200, 0.3) 100%) !important;
+            transition: opacity 0.8s ease-out;
         }
 
         @keyframes pulse-danger {
-            from { opacity: 0.4; transform: scale(1); }
-            to { opacity: 1; transform: scale(1.05); }
+            from { filter: brightness(1); }
+            to { filter: brightness(1.8); }
         }
 
         .shake-panel {
-            animation: shake-spatial 0.4s cubic-bezier(.36,.07,.19,.97) both;
+            animation: shake-spatial 0.5s cubic-bezier(.36,.07,.19,.97) both;
             border-color: var(--danger) !important;
         }
 
         @keyframes shake-spatial {
             0%, 100% { transform: translate3d(0, 0, 0); }
-            10%, 30%, 50%, 70%, 90% { transform: translate3d(-15px, -8px, 40px); }
-            20%, 40%, 60%, 80% { transform: translate3d(15px, 8px, -20px); }
+            10%, 30%, 50%, 70%, 90% { transform: translate3d(-10px, -5px, 20px); }
+            20%, 40%, 60%, 80% { transform: translate3d(10px, 5px, -10px); }
         }
     </style>
 </head>
 <body>
 
-    <div id="scan-line"></div>
+    <div id="hud-overlay"></div>
     <div id="danger-vignette"></div>
     <div id="canvas-container"></div>
 
     <div id="ui-layer">
         <div class="main-panel" id="main-panel">
             <div class="status-bar">
-                <span>任務進度: <span id="level">1</span> / 5</span>
+                <span>單元: FIRE-SCENARIO <span id="level">1</span></span>
                 <span>系統穩定度: <span id="score">100</span>%</span>
             </div>
-            <h1>防災沉浸模擬器</h1>
+            <h1>沉浸式防災訓練</h1>
             <div id="timer-bar"><div id="timer-progress"></div></div>
             
             <div id="content-area">
-                <div id="question-box">神經連結初始化中...</div>
+                <div id="question-box">初始化連結中...</div>
                 <div class="options-grid">
-                    <div class="option-card" id="opt0" onclick="selectAnswer(0)">連結 A</div>
-                    <div class="option-card" id="opt1" onclick="selectAnswer(1)">連結 B</div>
+                    <div class="option-card" id="opt0" onclick="selectAnswer(0)">選項 A</div>
+                    <div class="option-card" id="opt1" onclick="selectAnswer(1)">選項 B</div>
                 </div>
                 <div id="system-msg"></div>
             </div>
@@ -230,40 +229,74 @@
 
 <script>
     const quizData = [
-        { q: "【火場應變】室內失火濃煙密佈，逃生姿勢應為何？", options: ["挺起身子快跑", "採低姿勢爬行"], correct: 1, voice: "警報！室內濃煙密佈。請選擇逃生姿勢：選項一，挺起身子快跑；選項二，採低姿勢爬行。" },
-        { q: "【設備操作】使用滅火器時，噴嘴應瞄準火焰的哪個部位？", options: ["火焰的頂部", "火焰的根部"], correct: 1, voice: "發現火點。使用滅火器時，應瞄準何處？選項一，火焰的頂部；選項二，火焰的根部。" },
-        { q: "【通訊求救】火災發生時，撥打 999 應優先說出什麼資訊？", options: ["詳細地址與起火原因", "目前的得分與心情"], correct: 0, voice: "正在聯絡指揮中心。應優先通報什麼資訊？選項一，詳細地址與起火原因；選項二，目前的得分與心情。" },
-        { q: "【避難常識】火災逃生時，若發現門把發燙，正確做法是？", options: ["不開門，尋找其他出口", "戴上手套迅速開門衝出"], correct: 0, voice: "路徑受阻，門把發燙。你的下一步？選項一，不開門，尋找其他出口；選項二，戴上手套迅速開門衝出。" },
-        { q: "【地震防護】地震發生時，最好的防護動作口訣是？", options: ["趴下、掩護、穩住", "衝刺、跳躍、翻滾"], correct: 0, voice: "強烈震動！請執行防護口訣：選項一，趴下、掩護、穩住；選項二，衝刺、跳躍、翻滾。" }
+        { q: "【火場應變】室內失火濃煙密佈，逃生姿勢應為何？", options: ["挺起身子快跑", "採低姿勢爬行"], correct: 1, voice: "警報！室內濃煙密佈。請選擇逃生姿勢：選項一，快跑；選項二，低姿勢爬行。" },
+        { q: "【設備操作】使用滅火器時，噴嘴應瞄準火焰的哪個部位？", options: ["火焰的頂部", "火焰的根部"], correct: 1, voice: "發現火點。應瞄準何處？選項一，頂部；選項二，根部。" },
+        { q: "【通訊求救】火災發生時，撥打 999 應優先說出什麼資訊？", options: ["詳細地址與起火原因", "目前的得分與心情"], correct: 0, voice: "聯繫指揮中心。應優先通報什麼？選項一，地址與起火原因；選項二，心情狀態。" },
+        { q: "【避難常識】逃生時若發現門把發燙，正確做法是？", options: ["不開門，尋找其他出口", "戴上手套迅速開門衝出"], correct: 0, voice: "門把發燙，熱輻射異常。你的判斷？選項一，不開門；選項二，戴手套衝出。" },
+        { q: "【地震防護】地震發生時，最好的防護動作口訣是？", options: ["趴下、掩護、穩住", "衝刺、跳躍、翻滾"], correct: 0, voice: "強烈地震！請執行防護口訣：選項一，趴下、掩護、穩住；選項二，衝刺、翻滾。" }
     ];
 
     let currentIdx = 0;
     let score = 100;
     let lock = false;
-    let baseFogDensity = 0.14; // 初始環境煙霧較濃
+    let baseFogDensity = 0.16;
 
-    // --- 音效引擎 ---
+    // --- 音效系統 (多層合成) ---
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    function playSound(freq, type, duration, volume = 0.1) {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = type;
-        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-        gain.gain.setValueAtTime(volume, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.start(); osc.stop(audioCtx.currentTime + duration);
+    
+    function playSuccessSound() {
+        const t = audioCtx.currentTime;
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = 'sine';
+        o.frequency.setValueAtTime(523.25, t); // C5
+        o.frequency.exponentialRampToValueAtTime(1046.5, t + 0.3); // C6
+        g.gain.setValueAtTime(0.1, t);
+        g.gain.exponentialRampToValueAtTime(0.01, t + 0.4);
+        o.connect(g); g.connect(audioCtx.destination);
+        o.start(); o.stop(t + 0.4);
     }
 
-    // 環境低頻音 (模擬場景氛圍)
-    function playAmbientHum() {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(40, audioCtx.currentTime);
-        gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.start();
+    function playFailSound() {
+        const t = audioCtx.currentTime;
+        const o1 = audioCtx.createOscillator();
+        const g1 = audioCtx.createGain();
+        o1.type = 'sawtooth';
+        o1.frequency.setValueAtTime(150, t);
+        o1.frequency.linearRampToValueAtTime(40, t + 0.5);
+        g1.gain.setValueAtTime(0.15, t);
+        g1.gain.linearRampToValueAtTime(0, t + 0.5);
+        o1.connect(g1); g1.connect(audioCtx.destination);
+        o1.start(); o1.stop(t + 0.5);
+    }
+
+    // 火場背景音合成 (包含風聲與劈啪聲)
+    function playFireAmbient() {
+        // 1. 低頻轟鳴 (風與熱對流)
+        const rumble = audioCtx.createOscillator();
+        const rumbleGain = audioCtx.createGain();
+        rumble.type = 'sine';
+        rumble.frequency.setValueAtTime(45, audioCtx.currentTime);
+        rumbleGain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+        rumble.connect(rumbleGain);
+        rumbleGain.connect(audioCtx.destination);
+        rumble.start();
+
+        // 2. 劈啪聲模擬 (Procedural Crackle)
+        const crackleInterval = setInterval(() => {
+            if (audioCtx.state === 'closed') { clearInterval(crackleInterval); return; }
+            const t = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(Math.random() * 2000 + 1000, t);
+            g.gain.setValueAtTime(0.015, t);
+            g.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+            osc.connect(g);
+            g.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(t + 0.05);
+        }, 150);
     }
 
     function speak(text) {
@@ -274,11 +307,11 @@
         window.speechSynthesis.speak(utter);
     }
 
-    // --- Three.js 空間背景 ---
-    let scene, camera, renderer, extinguisher, particles, pointLight;
+    // --- Three.js 環境極致化 ---
+    let scene, camera, renderer, extinguisher, particles, mainLight, fireLight;
     function init3D() {
         scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(0x050505, baseFogDensity);
+        scene.fog = new THREE.FogExp2(0x0a0303, baseFogDensity);
         
         camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
         camera.position.z = 7;
@@ -287,58 +320,69 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-        // 3D 滅火器模型
+        // 3D 滅火器 (升級材質)
         extinguisher = new THREE.Group();
-        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 2, 32), new THREE.MeshPhongMaterial({color: 0xd32f2f, shininess: 100}));
-        const topPart = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.5, 0.5, 32), new THREE.MeshPhongMaterial({color: 0x222222}));
-        topPart.position.y = 1.2;
-        extinguisher.add(body); extinguisher.add(topPart);
+        const matBody = new THREE.MeshStandardMaterial({color: 0xcc0000, metalness: 0.9, roughness: 0.1});
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 2, 32), matBody);
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.5, 32, 16, 0, Math.PI*2, 0, Math.PI/2), matBody);
+        head.position.y = 1;
+        extinguisher.add(body); extinguisher.add(head);
         scene.add(extinguisher);
 
-        // 動態餘燼粒子
+        // 餘燼粒子
         const geo = new THREE.BufferGeometry();
-        const pCount = 4000;
+        const pCount = 6000;
         const pos = new Float32Array(pCount * 3);
+        const vels = [];
         for(let i=0; i<pCount*3; i+=3) {
-            pos[i] = (Math.random()-0.5)*30;
-            pos[i+1] = (Math.random()-0.5)*30;
-            pos[i+2] = (Math.random()-0.5)*30;
+            pos[i] = (Math.random()-0.5)*35;
+            pos[i+1] = (Math.random()-0.5)*35;
+            pos[i+2] = (Math.random()-0.5)*35;
+            vels.push({x: (Math.random()-0.5)*0.01, y: Math.random()*0.06 + 0.02});
         }
         geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-        const mat = new THREE.PointsMaterial({size: 0.05, color: 0xff6a00, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending});
+        const mat = new THREE.PointsMaterial({size: 0.07, color: 0xff6600, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending});
         particles = new THREE.Points(geo, mat);
+        particles.userData.vels = vels;
         scene.add(particles);
 
-        // 點光源 (模擬閃爍火光)
-        pointLight = new THREE.PointLight(0xffaa00, 2, 20);
-        pointLight.position.set(2, 2, 2);
-        scene.add(pointLight);
-        scene.add(new THREE.AmbientLight(0x101010));
+        // 光源
+        mainLight = new THREE.PointLight(0x00ffff, 1, 15);
+        mainLight.position.set(-3, 4, 2);
+        scene.add(mainLight);
+
+        fireLight = new THREE.PointLight(0xff3300, 4, 30);
+        fireLight.position.set(4, -2, 3);
+        scene.add(fireLight);
+
+        scene.add(new THREE.AmbientLight(0x050505));
 
         animate();
     }
 
     function animate() {
         requestAnimationFrame(animate);
-        const time = Date.now() * 0.001;
+        const t = Date.now() * 0.001;
         
-        // 滅火器運動
-        extinguisher.rotation.y += 0.005;
-        extinguisher.position.y = Math.sin(time) * 0.3;
+        // 滅火器旋轉
+        extinguisher.rotation.y += 0.01;
+        extinguisher.position.y = Math.sin(t) * 0.25;
         
-        // 粒子向上漂移
-        const positions = particles.geometry.attributes.position.array;
-        for(let i=1; i<positions.length; i+=3) {
-            positions[i] += 0.02;
-            if(positions[i] > 15) positions[i] = -15;
+        // 粒子動力學
+        const pArr = particles.geometry.attributes.position.array;
+        const vArr = particles.userData.vels;
+        for(let i=0; i<vArr.length; i++) {
+            pArr[i*3] += vArr[i].x + Math.sin(t*0.5 + i)*0.005;
+            pArr[i*3+1] += vArr[i].y;
+            if(pArr[i*3+1] > 15) pArr[i*3+1] = -15;
         }
         particles.geometry.attributes.position.needsUpdate = true;
-        particles.rotation.y += 0.0002;
 
-        // 火光閃爍
-        pointLight.intensity = 1.5 + Math.sin(time * 10) * 0.5;
+        // 火光模擬
+        fireLight.intensity = 3 + Math.sin(t * 12) * 2;
+        if(Math.random() > 0.99) fireLight.intensity = 15; // 爆燃效果
         
-        // 煙霧動態平衡
+        // 霧氣跟隨進度
         scene.fog.density += (baseFogDensity - scene.fog.density) * 0.05;
         
         renderer.render(scene, camera);
@@ -353,8 +397,8 @@
         document.getElementById('question-box').innerText = data.q;
         document.getElementById('opt0').innerText = data.options[0];
         document.getElementById('opt1').innerText = data.options[1];
-        document.getElementById('system-msg').innerText = "系統掃描中...";
-        document.getElementById('system-msg').style.color = "cyan";
+        document.getElementById('system-msg').innerText = ">>> 正在掃描決策路徑...";
+        document.getElementById('system-msg').style.color = "var(--accent)";
         document.getElementById('level').innerText = currentIdx + 1;
         
         speak(data.voice);
@@ -370,33 +414,37 @@
         const panel = document.getElementById('main-panel');
 
         if (idx === correct) {
-            playSound(1200, 'sine', 0.1, 0.1);
-            setTimeout(() => playSound(1600, 'sine', 0.2, 0.1), 80);
-            msg.innerText = ">> [成功] 環境威脅指數下降";
+            playSuccessSound();
+            msg.innerText = ">>> [判定正確] 環境風險指數下降";
             msg.style.color = "var(--success)";
             
-            // 答對效果：煙霧大幅減少
-            baseFogDensity = Math.max(0.01, baseFogDensity - 0.04);
-            speak("判定正確。空氣品質改善中。");
+            // 答對背景效果：藍綠色閃爍與煙霧大幅消散
+            baseFogDensity = Math.max(0.02, baseFogDensity - 0.05);
+            mainLight.color.set(0x00ffaa);
+            mainLight.intensity = 10;
+            vignette.classList.add('success-flash');
+            
+            speak("判定正確。空氣品質改善。");
+            setTimeout(() => {
+                vignette.classList.remove('success-flash');
+                mainLight.intensity = 1;
+            }, 800);
         } else {
             score -= 20;
-            baseFogDensity += 0.1; // 答錯：黑煙壟罩
-            
-            playSound(80, 'sawtooth', 0.6, 0.3); 
-            msg.innerText = ">> [警告] 災難擴散：系統穩定度受損";
+            playFailSound();
+            msg.innerText = ">>> [判定錯誤] 災情連鎖擴散中";
             msg.style.color = "var(--danger)";
             
-            // 視覺警報
+            // 答錯背景效果：紅光與煙霧激增
+            baseFogDensity += 0.12;
+            mainLight.color.set(0xff0000);
             vignette.classList.add('alert-active');
             panel.classList.add('shake-panel');
-            document.body.classList.add('glitch');
             
-            speak("決策失誤！危險正在蔓延。");
-            
+            speak("決策失誤。危險正在逼近。");
             setTimeout(() => {
                 vignette.classList.remove('alert-active');
                 panel.classList.remove('shake-panel');
-                document.body.classList.remove('glitch');
             }, 1200);
         }
 
@@ -405,19 +453,19 @@
         setTimeout(() => {
             currentIdx++;
             renderStep();
-        }, 3500);
+        }, 3200);
     }
 
     function showEnd() {
-        const finalStatus = score >= 80 ? "卓越防護指揮官" : score >= 60 ? "合格防災員" : "系統失效 - 撤離中";
-        speak(`訓練模擬結束。系統穩定度：百分之${score}。評定等級：${finalStatus}。`);
+        const finalStatus = score >= 80 ? "卓越防護戰士" : score >= 60 ? "合格防災員" : "核心崩毀：撤離失敗";
+        speak(`模擬終止。穩定度得分：百分之${score}。評級：${finalStatus}。`);
         
         document.getElementById('content-area').innerHTML = `
             <div style="margin: 40px 0;">
-                <h2 style="color:var(--warning); font-size: 2.2rem; letter-spacing: 2px;">訓練報告</h2>
-                <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; margin-bottom: 30px;">
-                    <p style="font-size: 1.4rem; margin-bottom: 10px;">核心穩定度: ${score}%</p>
-                    <p style="color: cyan; font-weight: bold;">評級: ${finalStatus}</p>
+                <h2 style="color:var(--accent); font-size: 2.2rem; letter-spacing: 2px;">訓練報告書</h2>
+                <div style="background: rgba(255,255,255,0.05); padding: 30px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); margin: 30px 0;">
+                    <p style="font-size: 1.6rem; margin: 0 0 10px 0;">最終穩定度: ${score}%</p>
+                    <p style="color: #fff; font-weight: bold; font-size: 1.2rem;">${finalStatus}</p>
                 </div>
                 <button class="option-card" style="width:100%; pointer-events:auto;" onclick="location.reload()">重新初始化系統</button>
             </div>
@@ -432,10 +480,9 @@
 
     window.onload = () => {
         init3D();
-        // 點擊頁面啟動音訊環境 (瀏覽器安全限制)
         document.body.addEventListener('click', () => {
             if(audioCtx.state === 'suspended') audioCtx.resume();
-            playAmbientHum();
+            playFireAmbient();
         }, {once: true});
         
         setTimeout(renderStep, 1000);
